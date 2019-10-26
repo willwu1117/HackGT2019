@@ -39,7 +39,7 @@ class SearchScreen extends Component {
           onTextChange={text => console.log(text)}
           //On text change listner on the searchable input
           onItemSelect={item => {
-            this.setState({selectedItem: items})
+            this.setState({selectedItem: item})
           }}
           //onItemSelect called after the selection from the dropdown
           containerStyle={{ padding: 5 }}
@@ -81,7 +81,7 @@ class SearchScreen extends Component {
         />
         <Button
           title="Next"
-          onPress={() => this.props.navigation.navigate('CheckList')}
+          onPress={() => this.props.navigation.navigate('CheckList', this.state)}
         />
       </View>
     );
@@ -93,8 +93,9 @@ class CheckListScreen extends Component {
     super(props);
 
     this.state = {
+      movie: props.navigation.state.params.selectedItem,
       jumpscares: false,
-      gore: false
+      gore: false,
     }
   }
   
@@ -114,10 +115,9 @@ class CheckListScreen extends Component {
           checked={this.state.gore}
           onPress={() => this.setState({gore: !this.state.gore})}
         />
-
         <Button
           title="Begin Movie"
-          onPress={() => this.props.navigation.navigate('Timer')}
+          onPress={() => this.props.navigation.navigate('Timer', this.state)}
         />
       </View>
     );
@@ -129,6 +129,9 @@ class TimerScreen extends React.Component {
     super(props);
  
     this.state = {
+      movie: props.navigation.state.params.movie,
+      gore: props.navigation.state.params.gore,
+      jumpscares: props.navigation.state.params.jumpscares,
       timer: null,
       minutes_Counter: '00',
       seconds_Counter: '00',
@@ -247,6 +250,8 @@ const AppContainer = createAppContainer(RootStack);
 
 export default class App extends React.Component {
   render() {
+    GLOBAL.movie = this;
+    GLOBAL.avoidMovieTypes = this;
     return <AppContainer />;
   }
 }
