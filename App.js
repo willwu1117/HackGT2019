@@ -4,7 +4,7 @@ import { Button, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityInd
 import { createAppContainer } from 'react-navigation';
 import { createStackNavigator } from 'react-navigation-stack';
 import { Stopwatch, Timer } from 'react-native-stopwatch-timer';
-import { SearchBar } from 'react-native-elements';
+import { SearchBar, CheckBox } from 'react-native-elements';
 import SearchableDropdown from 'react-native-searchable-dropdown';
 
 class HomeScreen extends React.Component {
@@ -21,96 +21,63 @@ class HomeScreen extends React.Component {
   }
 }
 
+const movies = require('./movie.json');
+
 class SearchScreen extends React.Component {
+  state = {
+    search: '',
+  };
+
+  updateSearch = search => {
+    this.setState({ search });
+  };
+
+  render() {
+    const { search } = this.state;
+
+    return (
+      <View>
+        <SearchBar
+          placeholder="Type Here..."
+          onChangeText={this.updateSearch}
+          value={search}
+        />
+        <Button
+          title="What would you like to avoid?"
+          onPress={() => this.props.navigation.navigate('CheckList')}
+        />
+      </View>
+    );
+  }
+}
+
+class CheckListScreen extends Component {
   constructor(props) {
     super(props);
-    //setting default state
-    this.state = { isLoading: true, search: '' };
-    this.arrayholder = [];
-  }
-  componentDidMount() {
-    return fetch('https://jsonplaceholder.typicode.com/posts')
-      .then(response => response.json())
-      .then(responseJson => {
-        this.setState(
-          {
-            isLoading: false,
-            dataSource: responseJson,
-          },
-          function() {
-            this.arrayholder = responseJson;
-          }
-        );
-      })
-      .catch(error => {
-        console.error(error);
-      });
-  }
-  search = text => {
-    console.log(text);
-  };
-  clear = () => {
-    this.search.clear();
-  };
-  SearchFilterFunction(text) {
-    //passing the inserted text in textinput
-    const newData = this.arrayholder.filter(function(item) {
-      //applying filter for the inserted text in search bar
-      const itemData = item.title ? item.title.toUpperCase() : ''.toUpperCase();
-      const textData = text.toUpperCase();
-      return itemData.indexOf(textData) > -1;
-    });
-    this.setState({
-      //setting the filtered newData on datasource
-      //After setting the data it will automatically re-render the view
-      dataSource: newData,
-      search:text,
-    });
-  }
-  ListViewItemSeparator = () => {
-    //Item sparator view
-    return (
-      <View
-        style={{
-          height: 0.3,
-          width: '90%',
-          backgroundColor: '#080808',
-        }}
-      />
-    );
-  };
-  render() {
-    if (this.state.isLoading) {
-      //Loading View while data is loading
-      return (
-        <View style={{ flex: 1, paddingTop: 20 }}>
-          <ActivityIndicator />
-        </View>
-      );
+
+    this.state = {
+      jumpscares: false,
+      gore: false
     }
+  }
+  
+  render() {
     return (
-      //ListView to show with textinput used as search bar
-      <View style={styles.viewStyle}>
-        <SearchBar
-          round
-          searchIcon={{ size: 24 }}
-          onChangeText={text => this.SearchFilterFunction(text)}
-          onClear={text => this.SearchFilterFunction('')}
-          placeholder="Type Here..."
-          value={this.state.search}
-          />
-          <FlatList
-          data={this.state.dataSource}
-          ItemSeparatorComponent={this.ListViewItemSeparator}
-          //Item Separator View
-          renderItem={({ item }) => (
-            // Single Comes here which will be repeatative for the FlatListItems
-            <Text style={styles.textStyle}>{item.title}</Text>
-          )}
-          enableEmptySections={true}
-          style={{ marginTop: 10 }}
-          keyExtractor={(item, index) => index.toString()}
+      <View style={styles.container}>
+        <Text>Select what you would like to be warned about.</Text>
+
+        <CheckBox
+          title='Jump scares'
+          checked={this.state.jumpscares}
+          onPress={() => this.setState({jumpscares: !this.state.jumpscares})}
         />
+
+        <CheckBox
+          title='Gore'
+          checked={this.state.gore}
+          onPress={() => this.setState({gore: !this.state.gore})}
+        />
+
         <Button
           title="Begin Movie"
           onPress={() => this.props.navigation.navigate('Timer')}
@@ -203,15 +170,6 @@ class TimerScreen extends React.Component {
 } 
  
 const styles = StyleSheet.create({
-  viewStyle: {
-    justifyContent: 'center',
-    flex: 1,
-    backgroundColor:'white',
-    marginTop: Platform.OS == 'ios'? 30 : 0
-  },
-  textStyle: {
-    padding: 10,
-  },
   MainContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -240,6 +198,7 @@ const RootStack = createStackNavigator(
   {
     Home: HomeScreen,
     Search: SearchScreen,
+    CheckList: CheckListScreen,
     Timer: TimerScreen,
   },
   {
