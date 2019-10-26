@@ -9,6 +9,7 @@ import SearchableDropdown from 'react-native-searchable-dropdown';
 import movies from './api/movies';
 import _ from 'lodash';
 import firebase from 'firebase';
+import BackgroundTimer from 'react-native-background-timer';
 
 var config = {
   databaseURL: 'https://adverscary.firebaseio.com/',
@@ -147,11 +148,16 @@ class TimerScreen extends React.Component {
   }
  
   componentWillUnmount() {
-    clearInterval(this.state.timer);
+    BackgroundTimer.clearInterval(this.state.timer);
   }
- 
+
   onButtonStart = () => {
-    let timer = setInterval(() => {
+
+    
+    BackgroundTimer.start();
+    
+
+    let timer = BackgroundTimer.setInterval(() => {
       var num = (Number(this.state.seconds_Counter) + 1).toString(),
         count = this.state.minutes_Counter;
  
@@ -171,7 +177,7 @@ class TimerScreen extends React.Component {
   }
  
   onButtonStop = () => {
-    clearInterval(this.state.timer);
+    BackgroundTimer.clearInterval(this.state.timer);
     this.setState({startDisable : false})
   }
  
@@ -215,7 +221,11 @@ class TimerScreen extends React.Component {
     );
   }
 } 
- 
+
+
+
+
+
 const styles = StyleSheet.create({
   MainContainer: {
     flex: 1,
