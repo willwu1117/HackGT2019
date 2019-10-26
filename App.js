@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { Component, Fragment } from 'react';
-import { Button, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform  } from 'react-native';
+import { Button, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform, SafeAreaView } from 'react-native';
 import { createAppContainer } from 'react-navigation';
 import { createStackNavigator } from 'react-navigation-stack';
 import { Stopwatch, Timer } from 'react-native-stopwatch-timer';
-import { SearchBar } from 'react-native-elements';
+import { List, SearchBar, CheckBox, ListItem } from 'react-native-elements';
 import SearchableDropdown from 'react-native-searchable-dropdown';
+import { getMovies, contains } from './api/index';
+import _ from 'lodash';
 
 class HomeScreen extends React.Component {
   render() {
@@ -24,93 +26,135 @@ class HomeScreen extends React.Component {
 class SearchScreen extends React.Component {
   constructor(props) {
     super(props);
-    //setting default state
-    this.state = { isLoading: true, search: '' };
-    this.arrayholder = [];
+    this.state = {
+      loading: false,
+      data: [],
+      error: null,
+      query: "",
+      fullData: [],
+    }
   }
+
   componentDidMount() {
-    return fetch('https://jsonplaceholder.typicode.com/posts')
-      .then(response => response.json())
-      .then(responseJson => {
-        this.setState(
-          {
-            isLoading: false,
-            dataSource: responseJson,
-          },
-          function() {
-            this.arrayholder = responseJson;
-          }
-        );
+    this.makeRemoteRequest();
+  }
+
+  makeRemoteRequest = _.debounce(() => {
+    this.setState({ loading: true });
+
+    getMovies(500, this.state.query)
+      .then(movies => {
+        this.setState({
+          loading: false,
+          data: movies,
+          fullData: movies,
+        });
       })
       .catch(error => {
-        console.error(error);
+        this.setState({ error, loading: false });
       });
-  }
-  search = text => {
-    console.log(text);
+  });
+
+  handleSearch = (text) => {
+    const formatQuery = text.toLowerCase();
+    const data = _.filter(this.state.fullData, movie => {
+      return contains(movie, formatQuery);
+    })
+    this.setState({ query: formatQuery, data }, () => this.makeRemoteRequest());
   };
-  clear = () => {
-    this.search.clear();
-  };
-  SearchFilterFunction(text) {
-    //passing the inserted text in textinput
-    const newData = this.arrayholder.filter(function(item) {
-      //applying filter for the inserted text in search bar
-      const itemData = item.title ? item.title.toUpperCase() : ''.toUpperCase();
-      const textData = text.toUpperCase();
-      return itemData.indexOf(textData) > -1;
-    });
-    this.setState({
-      //setting the filtered newData on datasource
-      //After setting the data it will automatically re-render the view
-      dataSource: newData,
-      search:text,
-    });
-  }
-  ListViewItemSeparator = () => {
-    //Item sparator view
+
+  renderSeparator = () => {
     return (
       <View
         style={{
-          height: 0.3,
-          width: '90%',
-          backgroundColor: '#080808',
+          height: 1,
+          width: "86%",
+          backgroundColor: "#CED0CE",
+          marginLeft: "14%"
         }}
       />
     );
   };
-  render() {
-    if (this.state.isLoading) {
-      //Loading View while data is loading
-      return (
-        <View style={{ flex: 1, paddingTop: 20 }}>
-          <ActivityIndicator />
-        </View>
-      );
-    }
+
+  renderHeader = () => {
     return (
-      //ListView to show with textinput used as search bar
-      <View style={styles.viewStyle}>
-        <SearchBar
-          round
-          searchIcon={{ size: 24 }}
-          onChangeText={text => this.SearchFilterFunction(text)}
-          onClear={text => this.SearchFilterFunction('')}
-          placeholder="Type Here..."
-          value={this.state.search}
-          />
-          <FlatList
-          data={this.state.dataSource}
-          ItemSeparatorComponent={this.ListViewItemSeparator}
-          //Item Separator View
+      <SearchBar 
+        placeholder="Type Here..." 
+        darkTheme 
+        round 
+        onChangeText={this.handleSearch}/>
+    );
+  };
+
+  renderFooter = () => {
+    if (!this.state.loading) return null;
+
+    return (
+      <View
+        style={{
+          paddingVertical: 20,
+          borderTopWidth: 1,
+          borderColor: "#CED0CE"
+        }}
+      >
+        <ActivityIndicator animating size="large" />
+      </View>
+    );
+  };
+
+  render() {
+    return (
+      <View>
+        <Text>What movie are you watching?</Text>
+        <FlatList
+          data={this.state.data}
           renderItem={({ item }) => (
-            // Single Comes here which will be repeatative for the FlatListItems
-            <Text style={styles.textStyle}>{item.title}</Text>
+            <ListItem
+              title={`${item.name}`}
+              containerStyle={{ borderBottomWidth: 0 }}
+            />
           )}
-          enableEmptySections={true}
-          style={{ marginTop: 10 }}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={item => item.name}
+          ItemSeparatorComponent={this.renderSeparator}
+          ListHeaderComponent={this.renderHeader}
+          ListFooterComponent={this.renderFooter}
         />
+        <Button
+          title="Next"
+          onPress={() => this.props.navigation.navigate('CheckList')}
+        />
+      </View>
+    );
+  }
+}
+
+class CheckListScreen extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      jumpscares: false,
+      gore: false
+    }
+  }
+  
+  render() {
+    return (
+      <View style={styles.container}>
+        <Text>Select what you would like to be warned about.</Text>
+
+        <CheckBox
+          title='Jump scares'
+          checked={this.state.jumpscares}
+          onPress={() => this.setState({jumpscares: !this.state.jumpscares})}
+        />
+
+        <CheckBox
+          title='Gore'
+          checked={this.state.gore}
+          onPress={() => this.setState({gore: !this.state.gore})}
+        />
+
         <Button
           title="Begin Movie"
           onPress={() => this.props.navigation.navigate('Timer')}
@@ -203,15 +247,6 @@ class TimerScreen extends React.Component {
 } 
  
 const styles = StyleSheet.create({
-  viewStyle: {
-    justifyContent: 'center',
-    flex: 1,
-    backgroundColor:'white',
-    marginTop: Platform.OS == 'ios'? 30 : 0
-  },
-  textStyle: {
-    padding: 10,
-  },
   MainContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -240,6 +275,7 @@ const RootStack = createStackNavigator(
   {
     Home: HomeScreen,
     Search: SearchScreen,
+    CheckList: CheckListScreen,
     Timer: TimerScreen,
   },
   {
@@ -254,4 +290,3 @@ export default class App extends React.Component {
     return <AppContainer />;
   }
 }
-
