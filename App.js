@@ -250,8 +250,6 @@ const AppContainer = createAppContainer(RootStack);
 
 export default class App extends React.Component {
   render() {
-    GLOBAL.movie = this;
-    GLOBAL.avoidMovieTypes = this;
     return <AppContainer />;
   }
 }
