@@ -1,8 +1,8 @@
 {
   "devToolsPort": 19002,
   "expoServerPort": 19000,
-  "packagerPort": 19001,
-  "packagerPid": 19076,
+  "packagerPort": null,
+  "packagerPid": null,
   "expoServerNgrokUrl": "https://ka-u68.edwardxia.hackgt2019.exp.direct",
   "packagerNgrokUrl": "https://packager.ka-u68.edwardxia.hackgt2019.exp.direct",
   "ngrokPid": 16648,
