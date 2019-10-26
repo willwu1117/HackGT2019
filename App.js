@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { Component, Fragment } from 'react';
-import { Button, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform  } from 'react-native';
+import { Button, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform, SafeAreaView } from 'react-native';
 import { createAppContainer } from 'react-navigation';
 import { createStackNavigator } from 'react-navigation-stack';
 import { Stopwatch, Timer } from 'react-native-stopwatch-timer';
-import { SearchBar, CheckBox } from 'react-native-elements';
+import { List, SearchBar, CheckBox, ListItem } from 'react-native-elements';
 import SearchableDropdown from 'react-native-searchable-dropdown';
+import { getMovies, contains } from './api/index';
+import _ from 'lodash';
 
 class HomeScreen extends React.Component {
   render() {
@@ -21,29 +23,104 @@ class HomeScreen extends React.Component {
   }
 }
 
-const movies = require('./movie.json');
-
 class SearchScreen extends React.Component {
-  state = {
-    search: '',
+  constructor(props) {
+    super(props);
+    this.state = {
+      loading: false,
+      data: [],
+      error: null,
+      query: "",
+      fullData: [],
+    }
+  }
+
+  componentDidMount() {
+    this.makeRemoteRequest();
+  }
+
+  makeRemoteRequest = _.debounce(() => {
+    this.setState({ loading: true });
+
+    getMovies(500, this.state.query)
+      .then(movies => {
+        this.setState({
+          loading: false,
+          data: movies,
+          fullData: movies,
+        });
+      })
+      .catch(error => {
+        this.setState({ error, loading: false });
+      });
+  });
+
+  handleSearch = (text) => {
+    const formatQuery = text.toLowerCase();
+    const data = _.filter(this.state.fullData, movie => {
+      return contains(movie, formatQuery);
+    })
+    this.setState({ query: formatQuery, data }, () => this.makeRemoteRequest());
   };
 
-  updateSearch = search => {
-    this.setState({ search });
+  renderSeparator = () => {
+    return (
+      <View
+        style={{
+          height: 1,
+          width: "86%",
+          backgroundColor: "#CED0CE",
+          marginLeft: "14%"
+        }}
+      />
+    );
+  };
+
+  renderHeader = () => {
+    return (
+      <SearchBar 
+        placeholder="Type Here..." 
+        darkTheme 
+        round 
+        onChangeText={this.handleSearch}/>
+    );
+  };
+
+  renderFooter = () => {
+    if (!this.state.loading) return null;
+
+    return (
+      <View
+        style={{
+          paddingVertical: 20,
+          borderTopWidth: 1,
+          borderColor: "#CED0CE"
+        }}
+      >
+        <ActivityIndicator animating size="large" />
+      </View>
+    );
   };
 
   render() {
-    const { search } = this.state;
-
     return (
       <View>
-        <SearchBar
-          placeholder="Type Here..."
-          onChangeText={this.updateSearch}
-          value={search}
+        <Text>What movie are you watching?</Text>
+        <FlatList
+          data={this.state.data}
+          renderItem={({ item }) => (
+            <ListItem
+              title={`${item.name}`}
+              containerStyle={{ borderBottomWidth: 0 }}
+            />
+          )}
+          keyExtractor={item => item.name}
+          ItemSeparatorComponent={this.renderSeparator}
+          ListHeaderComponent={this.renderHeader}
+          ListFooterComponent={this.renderFooter}
         />
         <Button
-          title="What would you like to avoid?"
+          title="Next"
           onPress={() => this.props.navigation.navigate('CheckList')}
         />
       </View>
@@ -213,4 +290,3 @@ export default class App extends React.Component {
     return <AppContainer />;
   }
 }
-
