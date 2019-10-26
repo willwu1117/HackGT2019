@@ -8,6 +8,13 @@ import { List, SearchBar, CheckBox, ListItem } from 'react-native-elements';
 import SearchableDropdown from 'react-native-searchable-dropdown';
 import { getMovies, contains } from './api/index';
 import _ from 'lodash';
+import firebase from 'firebase';
+
+var config = {
+  databaseURL: 'https://adverscary.firebaseio.com/',
+  projectId: 'adverscary'
+};
+firebase.initializeApp(config);
 
 class HomeScreen extends React.Component {
   render() {
@@ -32,8 +39,11 @@ class SearchScreen extends React.Component {
       error: null,
       query: "",
       fullData: [],
+      movie_list: {}
     }
   }
+
+
 
   componentDidMount() {
     this.makeRemoteRequest();
@@ -41,6 +51,7 @@ class SearchScreen extends React.Component {
 
   makeRemoteRequest = _.debounce(() => {
     this.setState({ loading: true });
+    let that = this;
 
     getMovies(500, this.state.query)
       .then(movies => {
@@ -53,6 +64,10 @@ class SearchScreen extends React.Component {
       .catch(error => {
         this.setState({ error, loading: false });
       });
+      firebase.database().ref('movies/').once('value', function (snapshot) {
+        that.setState({movie_list: snapshot.val()});
+        console.log(that.state.movie_list);
+    });
   });
 
   handleSearch = (text) => {
