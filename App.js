@@ -8,6 +8,13 @@ import { List, SearchBar, CheckBox, ListItem } from 'react-native-elements';
 import SearchableDropdown from 'react-native-searchable-dropdown';
 import movies from './api/movies';
 import _ from 'lodash';
+import firebase from 'firebase';
+
+var config = {
+  databaseURL: 'https://adverscary.firebaseio.com/',
+  projectId: 'adverscary'
+};
+firebase.initializeApp(config);
 
 class HomeScreen extends React.Component {
   render() {
@@ -250,8 +257,6 @@ const AppContainer = createAppContainer(RootStack);
 
 export default class App extends React.Component {
   render() {
-    GLOBAL.movie = this;
-    GLOBAL.avoidMovieTypes = this;
     return <AppContainer />;
   }
 }
