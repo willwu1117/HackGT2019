@@ -1,12 +1,13 @@
-
 import * as React from 'react';
 import { Component, Fragment } from 'react';
-import { Button, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform, Image  } from 'react-native';
+import { Button, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform, SafeAreaView, Image } from 'react-native';
 import { createAppContainer } from 'react-navigation';
 import { createStackNavigator } from 'react-navigation-stack';
 import { Stopwatch, Timer } from 'react-native-stopwatch-timer';
-import { SearchBar, CheckBox } from 'react-native-elements';
+import { List, SearchBar, CheckBox, ListItem } from 'react-native-elements';
 import SearchableDropdown from 'react-native-searchable-dropdown';
+import movies from './api/movies';
+import _ from 'lodash';
 
 class HomeScreen extends React.Component {
   static navigationOptions = {
@@ -31,30 +32,64 @@ class HomeScreen extends React.Component {
     );
   }
 }
-
-const movies = require('./movie.json');
-
-class SearchScreen extends React.Component {
-  state = {
-    search: '',
-  };
-
-  updateSearch = search => {
-    this.setState({ search });
-  };
-
+var items = movies;
+class SearchScreen extends Component {
+  constructor() {
+    super();
+    this.state = {
+      selectedItem: "",
+    };
+  }
   render() {
-    const { search } = this.state;
-
     return (
-      <View>
-        <SearchBar
-          placeholder="Type Here..."
-          onChangeText={this.updateSearch}
-          value={search}
+      <View style={{ flex: 1, marginTop: 30 }}>
+        <Text>What movie are you watching?</Text>
+        <SearchableDropdown
+          onTextChange={text => console.log(text)}
+          //On text change listner on the searchable input
+          onItemSelect={item => {
+            this.setState({selectedItem: items})
+          }}
+          //onItemSelect called after the selection from the dropdown
+          containerStyle={{ padding: 5 }}
+          //suggestion container style
+          textInputStyle={{
+            //inserted text style
+            padding: 12,
+            borderWidth: 1,
+            borderColor: '#ccc',
+            backgroundColor: '#FAF7F6',
+          }}
+          itemStyle={{
+            //single dropdown item style
+            padding: 10,
+            marginTop: 2,
+            backgroundColor: '#FAF9F8',
+            borderColor: '#bbb',
+            borderWidth: 1,
+          }}
+          itemTextStyle={{
+            //single dropdown item's text style
+            color: '#222',
+          }}
+          itemsContainerStyle={{
+            //items container style you can pass maxHeight
+            //to restrict the items dropdown hieght
+            maxHeight: '60%',
+          }}
+          items={items}
+          //mapping of item array
+          defaultIndex={2}
+          //default selected item index
+          placeholder="placeholder"
+          //place holder for the search input
+          resetValue={false}
+          //reset textInput Value with true and false state
+          underlineColorAndroid="transparent"
+          //To remove the underline from the android input
         />
         <Button
-          title="What would you like to avoid?"
+          title="Next"
           onPress={() => this.props.navigation.navigate('CheckList')}
         />
       </View>
@@ -71,7 +106,7 @@ class CheckListScreen extends Component {
       gore: false
     }
   }
-
+  
   render() {
     return (
       <View style={styles.container}>
@@ -101,7 +136,7 @@ class CheckListScreen extends Component {
 class TimerScreen extends React.Component {
   constructor(props) {
     super(props);
-
+ 
     this.state = {
       timer: null,
       minutes_Counter: '00',
@@ -109,36 +144,36 @@ class TimerScreen extends React.Component {
       startDisable: false
     }
   }
-
+ 
   componentWillUnmount() {
     clearInterval(this.state.timer);
   }
-
+ 
   onButtonStart = () => {
     let timer = setInterval(() => {
       var num = (Number(this.state.seconds_Counter) + 1).toString(),
         count = this.state.minutes_Counter;
-
+ 
       if (Number(this.state.seconds_Counter) == 59) {
         count = (Number(this.state.minutes_Counter) + 1).toString();
         num = '00';
       }
-
+ 
       this.setState({
         minutes_Counter: count.length == 1 ? '0' + count : count,
         seconds_Counter: num.length == 1 ? '0' + num : num
       });
     }, 1000);
     this.setState({ timer });
-
+ 
     this.setState({startDisable : true})
   }
-
+ 
   onButtonStop = () => {
     clearInterval(this.state.timer);
     this.setState({startDisable : false})
   }
-
+ 
   onButtonClear = () => {
     this.setState({
       timer: null,
@@ -146,67 +181,41 @@ class TimerScreen extends React.Component {
       seconds_Counter: '00',
     });
   }
-
+ 
   render() {
     return (
       <View style={styles.MainContainer}>
-
+ 
         <Text style={styles.counterText}>{this.state.minutes_Counter} : {this.state.seconds_Counter}</Text>
-
+ 
         <TouchableOpacity
           onPress={this.onButtonStart}
           activeOpacity={0.6}
-          style={[styles.button, { backgroundColor: this.state.startDisable ? '#B0BEC5' : '#FF6F00' }]}
+          style={[styles.button, { backgroundColor: this.state.startDisable ? '#B0BEC5' : '#FF6F00' }]} 
           disabled={this.state.startDisable} >
           <Text style={styles.buttonText}>START</Text>
         </TouchableOpacity>
-
+ 
         <TouchableOpacity
           onPress={this.onButtonStop}
           activeOpacity={0.6}
           style={[styles.button, { backgroundColor:  '#FF6F00'}]} >
           <Text style={styles.buttonText}>STOP</Text>
         </TouchableOpacity>
-
+ 
         <TouchableOpacity
           onPress={this.onButtonClear}
           activeOpacity={0.6}
-          style={[styles.button, { backgroundColor: this.state.startDisable ? '#B0BEC5' : '#FF6F00' }]}
+          style={[styles.button, { backgroundColor: this.state.startDisable ? '#B0BEC5' : '#FF6F00' }]} 
           disabled={this.state.startDisable} >
           <Text style={styles.buttonText}> CLEAR </Text>
         </TouchableOpacity>
       </View>
     );
   }
-}
-
-const RootStack = createStackNavigator(
-  {
-    Home: HomeScreen,
-    Search: SearchScreen,
-    Timer: TimerScreen,
-    },
-  {
-    initialRouteName: 'Home',
-    },
-
-);
-
+} 
+ 
 const styles = StyleSheet.create({
-  bigBlue: {
-    color: 'blue',
-    fontWeight: 'bold',
-    fontSize: 30,
-  },
-  white: {
-    color: 'white',
-    fontSize: 30,
-    fontWeight:'bold',
-    fontFamily: 'sans-serif',
-  },
-  black: {
-    color:'black'
-  },
   MainContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -228,8 +237,29 @@ const styles = StyleSheet.create({
   counterText:{
     fontSize: 28,
     color: '#000'
+  },
+    white: {
+    color: 'white',
+    fontSize: 30,
+    fontWeight:'bold',
+    fontFamily: 'sans-serif',
+  },
+    black: {
+    color:'black'
   }
 });
+
+const RootStack = createStackNavigator(
+  {
+    Home: HomeScreen,
+    Search: SearchScreen,
+    CheckList: CheckListScreen,
+    Timer: TimerScreen,
+  },
+  {
+    initialRouteName: 'Home',
+  }
+);
 
 const AppContainer = createAppContainer(RootStack);
 
@@ -238,4 +268,3 @@ export default class App extends React.Component {
     return <AppContainer />;
   }
 }
-
