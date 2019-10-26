@@ -6,7 +6,7 @@ import { createStackNavigator } from 'react-navigation-stack';
 import { Stopwatch, Timer } from 'react-native-stopwatch-timer';
 import { List, SearchBar, CheckBox, ListItem } from 'react-native-elements';
 import SearchableDropdown from 'react-native-searchable-dropdown';
-import { getMovies, contains } from './api/index';
+import movies from './api/movies';
 import _ from 'lodash';
 import firebase from 'firebase';
 
@@ -30,113 +30,65 @@ class HomeScreen extends React.Component {
   }
 }
 
-class SearchScreen extends React.Component {
-  constructor(props) {
-    super(props);
+var items = movies;
+class SearchScreen extends Component {
+  constructor() {
+    super();
     this.state = {
-      loading: false,
-      data: [],
-      error: null,
-      query: "",
-      fullData: [],
-      movie_list: {}
-    }
+      selectedItem: "",
+    };
   }
-
-
-
-  componentDidMount() {
-    this.makeRemoteRequest();
-  }
-
-  makeRemoteRequest = _.debounce(() => {
-    this.setState({ loading: true });
-    let that = this;
-
-    getMovies(500, this.state.query)
-      .then(movies => {
-        this.setState({
-          loading: false,
-          data: movies,
-          fullData: movies,
-        });
-      })
-      .catch(error => {
-        this.setState({ error, loading: false });
-      });
-      firebase.database().ref('movies/').once('value', function (snapshot) {
-        that.setState({movie_list: snapshot.val()});
-        console.log(that.state.movie_list);
-    });
-  });
-
-  handleSearch = (text) => {
-    const formatQuery = text.toLowerCase();
-    const data = _.filter(this.state.fullData, movie => {
-      return contains(movie, formatQuery);
-    })
-    this.setState({ query: formatQuery, data }, () => this.makeRemoteRequest());
-  };
-
-  renderSeparator = () => {
-    return (
-      <View
-        style={{
-          height: 1,
-          width: "86%",
-          backgroundColor: "#CED0CE",
-          marginLeft: "14%"
-        }}
-      />
-    );
-  };
-
-  renderHeader = () => {
-    return (
-      <SearchBar 
-        placeholder="Type Here..." 
-        darkTheme 
-        round 
-        onChangeText={this.handleSearch}/>
-    );
-  };
-
-  renderFooter = () => {
-    if (!this.state.loading) return null;
-
-    return (
-      <View
-        style={{
-          paddingVertical: 20,
-          borderTopWidth: 1,
-          borderColor: "#CED0CE"
-        }}
-      >
-        <ActivityIndicator animating size="large" />
-      </View>
-    );
-  };
-
   render() {
     return (
-      <View>
+      <View style={{ flex: 1, marginTop: 30 }}>
         <Text>What movie are you watching?</Text>
-        <FlatList
-          data={this.state.data}
-          renderItem={({ item }) => (
-            <ListItem
-              title={`${item.name}`}
-              containerStyle={{ borderBottomWidth: 0 }}
-            />
-          )}
-          keyExtractor={item => item.name}
-          ItemSeparatorComponent={this.renderSeparator}
-          ListHeaderComponent={this.renderHeader}
-          ListFooterComponent={this.renderFooter}
+        <SearchableDropdown
+          onTextChange={text => console.log(text)}
+          //On text change listner on the searchable input
+          onItemSelect={item => {
+            this.setState({selectedItem: item})
+          }}
+          //onItemSelect called after the selection from the dropdown
+          containerStyle={{ padding: 5 }}
+          //suggestion container style
+          textInputStyle={{
+            //inserted text style
+            padding: 12,
+            borderWidth: 1,
+            borderColor: '#ccc',
+            backgroundColor: '#FAF7F6',
+          }}
+          itemStyle={{
+            //single dropdown item style
+            padding: 10,
+            marginTop: 2,
+            backgroundColor: '#FAF9F8',
+            borderColor: '#bbb',
+            borderWidth: 1,
+          }}
+          itemTextStyle={{
+            //single dropdown item's text style
+            color: '#222',
+          }}
+          itemsContainerStyle={{
+            //items container style you can pass maxHeight
+            //to restrict the items dropdown hieght
+            maxHeight: '60%',
+          }}
+          items={items}
+          //mapping of item array
+          defaultIndex={2}
+          //default selected item index
+          placeholder="placeholder"
+          //place holder for the search input
+          resetValue={false}
+          //reset textInput Value with true and false state
+          underlineColorAndroid="transparent"
+          //To remove the underline from the android input
         />
         <Button
           title="Next"
-          onPress={() => this.props.navigation.navigate('CheckList')}
+          onPress={() => this.props.navigation.navigate('CheckList', this.state)}
         />
       </View>
     );
@@ -148,8 +100,9 @@ class CheckListScreen extends Component {
     super(props);
 
     this.state = {
+      movie: props.navigation.state.params.selectedItem,
       jumpscares: false,
-      gore: false
+      gore: false,
     }
   }
   
@@ -169,10 +122,9 @@ class CheckListScreen extends Component {
           checked={this.state.gore}
           onPress={() => this.setState({gore: !this.state.gore})}
         />
-
         <Button
           title="Begin Movie"
-          onPress={() => this.props.navigation.navigate('Timer')}
+          onPress={() => this.props.navigation.navigate('Timer', this.state)}
         />
       </View>
     );
@@ -184,6 +136,9 @@ class TimerScreen extends React.Component {
     super(props);
  
     this.state = {
+      movie: props.navigation.state.params.movie,
+      gore: props.navigation.state.params.gore,
+      jumpscares: props.navigation.state.params.jumpscares,
       timer: null,
       minutes_Counter: '00',
       seconds_Counter: '00',
