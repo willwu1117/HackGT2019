@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Component, Fragment } from 'react';
-import { Button, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform, SafeAreaView } from 'react-native';
+import { Button, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform, SafeAreaView, Vibration } from 'react-native';
 import { createAppContainer } from 'react-navigation';
 import { createStackNavigator } from 'react-navigation-stack';
 import { Stopwatch, Timer } from 'react-native-stopwatch-timer';
@@ -8,6 +8,21 @@ import { List, SearchBar, CheckBox, ListItem } from 'react-native-elements';
 import SearchableDropdown from 'react-native-searchable-dropdown';
 import movies from './api/movies';
 import _ from 'lodash';
+
+
+function toSeconds(datetime) {
+  const times = datetime.split(":");
+  var seconds;
+  if (times.length == 1) {
+    seconds = Number(times[0]);
+  } else if (times.length == 2) {
+    seconds = Number(times[0]) * 60 + Number(times[1]);
+  } else if (times.length == 3) {
+    seconds = Number(times[0]) * 3600 + Number(times[1]) * 60 + Number(times[2]);
+  }
+
+  return seconds;
+}
 
 class HomeScreen extends React.Component {
   render() {
@@ -70,9 +85,7 @@ class SearchScreen extends Component {
           }}
           items={items}
           //mapping of item array
-          defaultIndex={2}
-          //default selected item index
-          placeholder="placeholder"
+          placeholder="Search..."
           //place holder for the search input
           resetValue={false}
           //reset textInput Value with true and false state
@@ -135,37 +148,41 @@ class TimerScreen extends React.Component {
       timer: null,
       minutes_Counter: '00',
       seconds_Counter: '00',
-      startDisable: false
+      hours_Counter: '00',
+      startDisable: false,
+      timerStartTime: null,
+      buffer: 0,
     }
   }
- 
+
   componentWillUnmount() {
     clearInterval(this.state.timer);
   }
- 
+  
   onButtonStart = () => {
+    this.state.timerStartTime = Date.now();
     let timer = setInterval(() => {
-      var num = (Number(this.state.seconds_Counter) + 1).toString(),
-        count = this.state.minutes_Counter;
- 
-      if (Number(this.state.seconds_Counter) == 59) {
-        count = (Number(this.state.minutes_Counter) + 1).toString();
-        num = '00';
-      }
- 
+      var sec = (Math.floor(((Date.now() - this.state.timerStartTime)/1000) + this.state.buffer) % 60).toString(),
+        min = Math.floor(((Math.floor((Date.now() - this.state.timerStartTime)/1000) + this.state.buffer) % 3600)/60).toString(),
+          hr = Math.floor((Math.floor((Date.now() - this.state.timerStartTime)/1000) + this.state.buffer) /3600).toString();
+
       this.setState({
-        minutes_Counter: count.length == 1 ? '0' + count : count,
-        seconds_Counter: num.length == 1 ? '0' + num : num
+        minutes_Counter: min.length == 1 ? '0' + min : min,
+        seconds_Counter: sec.length == 1 ? '0' + sec : sec,
+        hours_Counter: hr.length == 1 ? '0' + hr:hr,
       });
     }, 1000);
     this.setState({ timer });
- 
+
     this.setState({startDisable : true})
   }
  
   onButtonStop = () => {
     clearInterval(this.state.timer);
-    this.setState({startDisable : false})
+    this.setState({
+      startDisable : false,
+      buffer : (Math.floor(Date.now() - this.state.timerStartTime) / 1000) + this.state.buffer,
+    })
   }
  
   onButtonClear = () => {
@@ -173,6 +190,9 @@ class TimerScreen extends React.Component {
       timer: null,
       minutes_Counter: '00',
       seconds_Counter: '00',
+      hours_Counter: '00',
+      timerStartTime: null,
+      alreadyStarted: false,
     });
   }
  
@@ -180,7 +200,7 @@ class TimerScreen extends React.Component {
     return (
       <View style={styles.MainContainer}>
  
-        <Text style={styles.counterText}>{this.state.minutes_Counter} : {this.state.seconds_Counter}</Text>
+        <Text style={styles.counterText}>{this.state.hours_Counter} : {this.state.minutes_Counter} : {this.state.seconds_Counter}</Text>
  
         <TouchableOpacity
           onPress={this.onButtonStart}
