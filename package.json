@@ -1,19 +1,19 @@
 {
-  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
     "web": "expo start --web",
-    "eject": "expo eject"
+    "postinstall": "jetify"
   },
   "dependencies": {
     "expo": "^35.0.0",
     "firebase": "^7.2.2",
     "react": "16.8.3",
     "react-dom": "16.8.3",
-    "react-native": "https://github.com/expo/react-native/archive/sdk-35.0.0.tar.gz",
+    "react-native": "0.59.10",
     "react-native-background-timer": "^2.1.1",
+    "react-native-cli": "^2.0.1",
     "react-native-dynamic-search-bar": "^0.2.1",
     "react-native-elements": "^1.2.6",
     "react-native-firebase": "^5.5.6",
@@ -22,12 +22,19 @@
     "react-native-screens": "~1.0.0-alpha.23",
     "react-native-searchable-dropdown": "^1.1.1",
     "react-native-stopwatch-timer": "0.0.21",
+    "react-native-unimodules": "0.6.0",
     "react-native-vector-icons": "^6.6.0",
     "react-native-web": "^0.11.7",
     "react-navigation": "^4.0.10",
     "react-navigation-stack": "^1.10.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.6.0",
+    "babel-jest": "24.9.0",
+    "jest": "24.9.0",
+    "jetifier": "^1.6.4",
+    "metro-react-native-babel-preset": "0.56.0",
+    "react-test-renderer": "16.9.0",
     "babel-preset-expo": "^7.1.0"
   },
   "private": true

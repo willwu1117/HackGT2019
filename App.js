@@ -153,9 +153,9 @@ class TimerScreen extends React.Component {
 
   onButtonStart = () => {
 
-    
-    BackgroundTimer.start();
-    
+    if (Platform.OS =="ios") {
+      BackgroundTimer.start();
+    }
 
     let timer = BackgroundTimer.setInterval(() => {
       var num = (Number(this.state.seconds_Counter) + 1).toString(),
