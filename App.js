@@ -30,7 +30,8 @@ class HomeScreen extends React.Component {
   }
 }
 
-var items = movies;
+var items = movies; // todo: get array of all movie names here
+
 class SearchScreen extends Component {
   constructor() {
     super();
@@ -136,7 +137,7 @@ class TimerScreen extends React.Component {
     super(props);
  
     this.state = {
-      movie: props.navigation.state.params.movie,
+      movie: props.navigation.state.params.movie.name,
       gore: props.navigation.state.params.gore,
       jumpscares: props.navigation.state.params.jumpscares,
       timer: null,
@@ -144,6 +145,21 @@ class TimerScreen extends React.Component {
       seconds_Counter: '00',
       startDisable: false
     }
+    let timeStamps = [];
+    let descriptions = [];
+
+    console.log(this.state.movie);
+    console.log(this.state.jumpscares);
+    firebase.database().ref('movies/'.concat(this.state.movie, '/scares')).once('value', function (snapshot) {
+      console.log("----");
+      let val = snapshot.val();
+      console.log(timeStamps);
+      for (var i = 0; i < val.length; i++) {
+        console.log(val[i]);
+        // timeStamps.push(val[i].keys().next().value);
+      }
+      // console.log(timeStamps);
+    })
   }
  
   componentWillUnmount() {
