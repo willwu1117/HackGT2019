@@ -8,6 +8,13 @@ import { List, SearchBar, CheckBox, ListItem } from 'react-native-elements';
 import SearchableDropdown from 'react-native-searchable-dropdown';
 import movies from './api/movies';
 import _ from 'lodash';
+import firebase from 'firebase';
+
+var config = {
+  databaseURL: 'https://adverscary.firebaseio.com/',
+  projectId: 'adverscary'
+};
+firebase.initializeApp(config);
 
 
 function toSeconds(datetime) {
@@ -111,7 +118,7 @@ class CheckListScreen extends Component {
       gore: false,
     }
   }
-  
+
   render() {
     return (
       <View style={styles.container}>
@@ -140,12 +147,12 @@ class CheckListScreen extends Component {
 class TimerScreen extends React.Component {
   constructor(props) {
     super(props);
- 
     this.state = {
       movie: props.navigation.state.params.movie,
       gore: props.navigation.state.params.gore,
       jumpscares: props.navigation.state.params.jumpscares,
       timer: null,
+      hours_Counter: '00',
       minutes_Counter: '00',
       seconds_Counter: '00',
       hours_Counter: '00',
@@ -158,10 +165,11 @@ class TimerScreen extends React.Component {
   componentWillUnmount() {
     clearInterval(this.state.timer);
   }
-  
+
   onButtonStart = () => {
     this.state.timerStartTime = Date.now();
     let timer = setInterval(() => {
+
       var sec = (Math.floor(((Date.now() - this.state.timerStartTime)/1000) + this.state.buffer) % 60).toString(),
         min = Math.floor(((Math.floor((Date.now() - this.state.timerStartTime)/1000) + this.state.buffer) % 3600)/60).toString(),
           hr = Math.floor((Math.floor((Date.now() - this.state.timerStartTime)/1000) + this.state.buffer) /3600).toString();
@@ -170,13 +178,32 @@ class TimerScreen extends React.Component {
         minutes_Counter: min.length == 1 ? '0' + min : min,
         seconds_Counter: sec.length == 1 ? '0' + sec : sec,
         hours_Counter: hr.length == 1 ? '0' + hr:hr,
+
+      var num = (Number(this.state.seconds_Counter) + 1).toString(),
+        count = this.state.minutes_Counter,
+         hr = this.state.hours_Counter;
+
+      if (Number(this.state.seconds_Counter) == 59) {
+        count = (Number(this.state.minutes_Counter) + 1).toString();
+        num = '00';
+      }
+      if (Number(count) == 60) {
+        hr = (Number(this.state.hours_Counter) + 1).toString();
+        count = '00';
+      }
+
+      this.setState({
+        minutes_Counter: count.length == 1 ? '0' + count : count,
+        seconds_Counter: num.length == 1 ? '0' + num : num,
+        hours_Counter: hr.length == 1 ? '0' + hr:hr
+
       });
     }, 1000);
     this.setState({ timer });
 
     this.setState({startDisable : true})
   }
- 
+
   onButtonStop = () => {
     clearInterval(this.state.timer);
     this.setState({
@@ -184,7 +211,7 @@ class TimerScreen extends React.Component {
       buffer : (Math.floor(Date.now() - this.state.timerStartTime) / 1000) + this.state.buffer,
     })
   }
- 
+
   onButtonClear = () => {
     this.setState({
       timer: null,
@@ -192,43 +219,48 @@ class TimerScreen extends React.Component {
       seconds_Counter: '00',
       hours_Counter: '00',
       timerStartTime: null,
-      alreadyStarted: false,
+      buffer: 0,
     });
   }
- 
+
   render() {
     return (
       <View style={styles.MainContainer}>
+
  
         <Text style={styles.counterText}>{this.state.hours_Counter} : {this.state.minutes_Counter} : {this.state.seconds_Counter}</Text>
  
+
+
+        <Text style={styles.counterText}>{this.state.hours_Counter} : {this.state.minutes_Counter} : {this.state.seconds_Counter}</Text>
+
         <TouchableOpacity
           onPress={this.onButtonStart}
           activeOpacity={0.6}
-          style={[styles.button, { backgroundColor: this.state.startDisable ? '#B0BEC5' : '#FF6F00' }]} 
+          style={[styles.button, { backgroundColor: this.state.startDisable ? '#B0BEC5' : '#FF6F00' }]}
           disabled={this.state.startDisable} >
           <Text style={styles.buttonText}>START</Text>
         </TouchableOpacity>
- 
+
         <TouchableOpacity
           onPress={this.onButtonStop}
           activeOpacity={0.6}
           style={[styles.button, { backgroundColor:  '#FF6F00'}]} >
           <Text style={styles.buttonText}>STOP</Text>
         </TouchableOpacity>
- 
+
         <TouchableOpacity
           onPress={this.onButtonClear}
           activeOpacity={0.6}
-          style={[styles.button, { backgroundColor: this.state.startDisable ? '#B0BEC5' : '#FF6F00' }]} 
+          style={[styles.button, { backgroundColor: this.state.startDisable ? '#B0BEC5' : '#FF6F00' }]}
           disabled={this.state.startDisable} >
           <Text style={styles.buttonText}> CLEAR </Text>
         </TouchableOpacity>
       </View>
     );
   }
-} 
- 
+}
+
 const styles = StyleSheet.create({
   MainContainer: {
     flex: 1,
